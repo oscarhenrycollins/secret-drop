@@ -6,6 +6,7 @@ type: service
 category: system
 version: 0.1.1
 summary: One-time encrypted links for giving an agent a password or key without pasting it in chat.
+icon: icon.png
 license: MIT
 source: https://github.com/oscarhenrycollins/secret-drop
 runtime:
