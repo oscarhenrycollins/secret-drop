@@ -6,13 +6,18 @@ type: service
 version: 0.1.1
 summary: One-time encrypted links for handing an API key or password to an AI agent without chat.
 license: MIT
-source: https://github.com/mistermizel/secret-drop
+source: https://github.com/oscarhenrycollins/secret-drop
 runtime:
   kind: runtipi
   config: runtipi/config.json
   compose: runtipi/docker-compose.yml
+mcp:
+  path: /mcp
+  port: 8792
+  transport: streamable-http
 skill: SKILL.md
-provides: [secrets]
+provides:
+- secrets
 health: /health
 ---
 
