@@ -3,8 +3,9 @@ wizard: 0.2
 id: secret-drop
 name: Secret Drop
 type: service
+category: system
 version: 0.1.1
-summary: One-time encrypted links for handing an API key or password to an AI agent without chat.
+summary: One-time encrypted links for giving an agent a password or key without pasting it in chat.
 license: MIT
 source: https://github.com/oscarhenrycollins/secret-drop
 runtime:
@@ -23,4 +24,4 @@ health: /health
 
 # Secret Drop
 
-One-time encrypted links for handing an API key or password to an AI agent without chat.
+One-time encrypted links for giving an agent a password or key without pasting it in chat.
