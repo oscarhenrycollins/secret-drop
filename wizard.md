@@ -6,7 +6,7 @@ type: service
 version: 0.1.1
 summary: One-time encrypted links for handing an API key or password to an AI agent without chat.
 license: MIT
-source: https://github.com/minhyeong112/secret-drop
+source: https://github.com/mistermizel/secret-drop
 runtime:
   kind: runtipi
   config: runtipi/config.json
