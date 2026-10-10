@@ -4,6 +4,7 @@ id: secret-drop
 name: Secret Drop
 type: service
 category: system
+tags: [security]
 version: 0.1.1
 summary: One-time encrypted links for giving an agent a password or key without pasting it in chat.
 icon: icon.png
