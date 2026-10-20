@@ -273,7 +273,7 @@ services:
       is_main: true
       internal_port: 8792
   secret-drop-engine:
-    image: ghcr.io/humanitylabs-org/secret-drop:0.1.1
+    image: ghcr.io/humanitylabs-org/secret-drop:0.1.1@sha256:29ebc6a7846e6036afc471dc6ddcee31a9cac3a0ce8f00d59cd1186c80c03302
     user: 1000:1000
     read_only: true
     cap_drop:
