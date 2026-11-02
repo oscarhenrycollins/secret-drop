@@ -19,6 +19,9 @@ services:
       UPSTREAM_HOST: secret-drop-engine
       UPSTREAM_PORT: '8792'
       PYTHONDONTWRITEBYTECODE: '1'
+      # Browser boundary (default-off; the App Manager writes it into this app's own env when it is on): /mcp and the
+      # relay's agent API then refuse every browser request. The recipient page and its one-use link are unchanged.
+      WIZARD_BROWSER_BOUNDARY: ${WIZARD_BROWSER_BOUNDARY:-0}
     depends_on:
     - secret-drop-engine
     command:
@@ -53,6 +56,33 @@ services:
       MAX_BODY = 1 << 20
       TOOLS = {}
       REQUEST = contextvars.ContextVar("request", default={})  # headers of the current /mcp call
+
+      # Browser boundary (default-off, WIZARD_BROWSER_BOUNDARY=1; wizard-os #133 census row "secret-drop"). The recipient
+      # page stays on this app's own port, its own non-owner origin, and keeps its one-use link capability: nothing about it
+      # changes. The AGENT side of this listener (/mcp and the relay's /api/v1/requests: create, status, pick up, cancel) is
+      # for programs, never a browser: with the boundary on, every preflight and any request carrying browser headers
+      # (Origin, Cookie, Referer, Fetch Metadata Site/Dest/User; a page cannot remove them) is refused there, before the
+      # engine sees it. Sec-Fetch-Mode is not counted: Node's fetch sends it from programs too. An app frame or another site
+      # therefore cannot open a drop request with its own key, consume a pickup or cancel one. The relay's optional agent
+      # token (SECRET_DROP_API_TOKEN) is unchanged. No CORS header is ever sent.
+      BOUNDARY = os.environ.get("WIZARD_BROWSER_BOUNDARY", "0") == "1"
+      AGENT_ONLY = (MCP_PATH, "/api/v1/requests")
+      BROWSER_HEADERS = ("origin", "cookie", "referer", "sec-fetch-site", "sec-fetch-dest", "sec-fetch-user")
+
+
+      def agent_only(path):
+          return any(path == p or path.startswith(p + "/") for p in AGENT_ONLY)
+
+
+      def listener_gate(method, path, raw_headers):
+          """(status, error) when the boundary refuses this request, else None. raw_headers: [(lower name, value)]."""
+          if not BOUNDARY or not agent_only(path):
+              return None
+          if method == "OPTIONS":
+              return 403, "preflight_refused"
+          if any(k in BROWSER_HEADERS for k, _ in raw_headers):
+              return 403, "browser_request_refused"
+          return None
 
 
       def tool(name, description, props=None, required=()):
@@ -180,6 +210,12 @@ services:
           line, _, rest = head.partition(b"\r\n")
           parts = line.decode("latin-1").split(" ")
           path = parts[1].split("?", 1)[0] if len(parts) >= 3 else ""
+          if BOUNDARY:
+              raw = [(k.strip().lower(), v.strip()) for k, _, v in
+                     (l.partition(":") for l in rest.decode("latin-1").split("\r\n") if ":" in l)]
+              refused = listener_gate(parts[0], path, raw)
+              if refused:
+                  return await respond(writer, refused[0], {"error": refused[1]}, "Cache-Control: no-store\r\n")
           if path == MCP_PATH:
               return await mcp(reader, writer, parts[0], rest)
           if not UP_HOST:
